@@ -49,26 +49,23 @@ with open("input", "r") as file:
         robot.x = (robot.x + robot.vx * time)%width
         robot.y = (robot.y + robot.vy * time)%height
 
-    tl = []
-    tr = []
-    bl = []
-    br = []
+    tl,tr,bl,br = 0,0,0,0
 
     for robot in robots:
         #tl 0 - width-1/2 | 0 - height-1/2
         if 0 <= robot.x < (width-1)/2 and 0 <= robot.y < (height-1)/2:
-            tl.append(robot)
+            tl += 1
         #tr 0 - width-1/2 | 0 - height-1/2
         if (width-1)/2 < robot.x < width and 0 <= robot.y < (height-1)/2:
-            tr.append(robot)
+            tr += 1
         #bl 0 width-1/2 | height-1/2 height
         if 0 <= robot.x < (width-1)/2 and (height-1)/2 < robot.y < height:
-            bl.append(robot)
+            bl += 1
         #br width-1/2 width | height-1/2 height
         if (width-1)/2 < robot.x < width and (height-1)/2 < robot.y < height:
-            br.append(robot)
+            br += 1
 
-    print(len(bl)*len(br)*len(tl)*len(tr))
+    print(tl,tr,bl,br)
 
     #part2
     res2 = 1
@@ -85,20 +82,13 @@ with open("input", "r") as file:
     res2 = 1
     with open("output", "w") as f:
         while res2 <= 10000:
-            lefthalf = 0
-            righthalf = 0
+            s = set([])
             for robot in robots:
                 robot.x = (robot.x + robot.vx * res2)%width
                 robot.y = (robot.y + robot.vy * res2)%height
-                if robot.x <= width//2:
-                    lefthalf += 1
-                elif width/2 < robot.x < width:
-                    righthalf += 1
+                s.add((robot.x, robot.y))
 
-            if lefthalf >=bl:
-                bl = lefthalf
-                display(robots, width, height, res2, f)
-            if righthalf >= br:
-                br = righthalf
-                display(robots, width, height, res2, f)
-            res2 += 1
+            #Better to use Chinese Remainder Theorem, or to use statistics to search for robot density
+            if len(s) == len(robots):
+                break
+        display(robots, width, height, res2, f)
