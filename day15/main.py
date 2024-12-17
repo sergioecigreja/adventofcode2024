@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class Direction(Enum):
     N = '^'
     S = 'v'
@@ -32,6 +31,44 @@ def to_point(i, j, direction:Direction)->Point:
         case Direction.W:
             return Point(i, j-1)
 
+def can_navigate(r,d,map):
+    if map[r.x][r.y] == "#":
+        return -1
+    np = to_point(r.x, r.y, d)
+    depthL = 0
+    depthR = 0
+
+    if map[np.x][np.y] == "#":
+        return -1
+    if map[np.x][np.y] == "[":
+        if d == Direction.N or d == Direction.S:
+            depthL += can_navigate(np,d,map)
+            if depthL != 0:
+                depthR  += can_navigate(Point(np.x, np.y + 1), d, map)
+            else:
+                return -1
+            if depthL == -1 or depthR == -1 or depthL != depthR:
+                return -1
+            return depthL
+        else:
+            return -1 #shouldn't get here, will only use if north or south
+    if map[np.x][np.y] == "]":
+        if d == Direction.N or d == Direction.S:
+            depthR += can_navigate(np,d,map)
+            if depthR != 0:
+                depthL  += can_navigate(Point(np.x, np.y - 1), d, map)
+            else:
+                return -1
+            if depthL == -1 or depthR == -1 or depthL != depthR:
+                return -1
+            return depthL
+        else:
+            return -1 #shouldn't get here, will only use if north or south
+    if map[np.x][np.y] == ".":
+        return 1
+
+    return -1
+
 def navigate(r, d, map):
     if map[r.x][r.y] == "#":
         return
@@ -42,20 +79,43 @@ def navigate(r, d, map):
     if map[np.x][np.y] == "O":
         navigate(np,d,map)
     if map[np.x][np.y] == "[":
-        p = navigate(np,d,map)
-        if p != np:
-            navigate(Point(np.x, np.y+1), d, map)
+        if d == Direction.N or d == Direction.S:
+            depth = can_navigate(r, d, map)
+            if (depth == -1):
+                return r
+            p = navigate(np,d,map)
+            if p != np:
+                a = Point(np.x, np.y + 1)
+                b = navigate(a, d, map)
+                if a == b:
+                    c = to_point(np.x, np.y, d)
+                    map[np.x] = map[np.x][:np.y] + map[c.x][c.y] + map[np.x][np.y+1:]
+                    map[c.x] = map[c.x][:c.y] + "." + map[c.x][c.y+1:]
+        else:
+            navigate(np, d, map)
+
     if map[np.x][np.y] == "]":
-        p = navigate(np,d,map)
-        if p != np:
-            navigate(Point(np.x, np.y-1), d, map)
+        if d == Direction.N or d == Direction.S:
+            depth = can_navigate(r, d, map)
+            if (depth == -1):
+                return r
+            p = navigate(np,d,map)
+            if p != np:
+                a = Point(np.x, np.y - 1)
+                b = navigate(a, d, map)
+                if a == b:
+                    c = to_point(np.x, np.y, d)
+                    map[np.x] = map[np.x][:np.y] + map[c.x][c.y] + map[np.x][np.y+1:]
+                    map[c.x] = map[c.x][:c.y] + "." + map[c.x][c.y+1:]
+        else:
+            navigate(np,d,map)
     if map[np.x][np.y] == ".":
         map[np.x] = map[np.x][:np.y] + map[r.x][r.y] + map[np.x][np.y+1:]
         map[r.x] = map[r.x][:r.y] + '.' + map[r.x][r.y+1:]
         return np
 
     return r
-with open("sample2", "r") as f:
+with open("input", "r") as f:
     lines = [l.removesuffix("\n") for l in f.readlines()]
     map = []
     robot = []
@@ -116,7 +176,8 @@ with open("sample2", "r") as f:
                     list.append("]")
 
             map.append("".join(list))
-
+    for l in map:
+        print(l)
     r = Point(-1,-1)
     for i in range(len(map)):
         for j in range(len(map[0])):
@@ -128,5 +189,14 @@ with open("sample2", "r") as f:
             if l[i] != "#":
                 d = Direction(l[i])
                 r = navigate(r,d,map)
-                for l in map:
-                    print(l)
+
+    for l in map:
+        print(l)
+    w = len(map[0])
+    h = len(map)
+    res2 = 0
+    for i in range(h):
+        for j in range(w):
+            if map[i][j] == "[":
+                res2 += i * 100 + j
+    print(res2)
